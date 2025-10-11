@@ -1,0 +1,110 @@
+.gallery-container {
+    --columns: 1;
+    --gutter: 2px;
+    --total-spacing: calc((var(--columns) - 1) * var(--gutter));
+
+    padding: var(--gutter) 0px;
+}
+
+.gallery-item-sizer,
+.gallery-item {
+    width: calc((100% - var(--total-spacing)) / var(--columns));
+}
+
+.gallery-gutter-sizer {
+    width: var(--gutter);
+}
+
+@media (min-width: 375px) {
+    .gallery-container {
+        --columns: 2;
+        --gutter: 4px;
+    }
+}
+
+@media (min-width: 768px) {
+    .gallery-container {
+        --columns: 3;
+        --gutter: 6px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .gallery-container {
+        --columns: 4;
+        --gutter: 8px;
+    }
+}
+
+@media (min-width: 1440px) {
+    .gallery-container {
+        --columns: 5;
+        --gutter: 10px;
+    }
+}
+
+/*
+ * Media Info
+ */
+
+.play-icon {
+    font-size: 4rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.media-info {
+    position: absolute;
+    bottom: var(--gutter);
+    left: var(--gutter);
+    padding: 0.3rem 0.8rem;
+    border-radius: 16px;
+    transform: translateY(150%);
+    transition: transform 0.3s ease;
+    color: var(--text);
+    background: var(--glass-bg);
+    border-radius: 16px;
+
+    font-size: 0.75rem;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(60px);
+}
+
+.gallery-item:hover .media-info {
+    transform: translateY(0%);
+}
+
+.folder-badge {
+    position: absolute;
+    bottom: var(--gutter);
+    right: var(--gutter);
+    padding: 0.3rem 0.8rem;
+    border-radius: 16px;
+    color: var(--text);
+    background: var(--glass-bg);
+    border-radius: 16px;
+
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    z-index: 3;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+/*
+ * Dragging
+ */
+
+.gallery-item.is-dragging,
+.gallery-item.is-positioning-post-drag {
+    z-index: 2;
+}
+
+.packery-drop-placeholder {
+    outline: 0.125rem dashed var(--bs-border-color);
+    outline-offset: -0.125rem;
+    transition: transform 0.2s;
+    -webkit-transition: -webkit-transform 0.2s;
+}

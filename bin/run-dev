@@ -1,0 +1,100 @@
+#!/bin/sh
+
+# Run the development server
+
+#
+# Functions
+#
+
+log() {
+	if [ -t 2 ]; then
+		C0='\033[0m'
+		C1='\033[31m'
+		C2='\033[32m'
+		C3='\033[33m'
+		C4='\033[34m'
+		C5='\033[35m'
+		CB='\033[1m'
+	fi
+	n="${C0}"
+	c="${C4}"
+	p='*'
+	while getopts ":eswd" opt; do
+		case "${opt}" in
+			e)
+				p='✖'
+				c="${C1}"
+				;;
+			s)
+				p='✔'
+				c="${C2}"
+				;;
+			w)
+				p='!'
+				c="${C3}"
+				;;
+			d)
+				p='+'
+				c="${C5}"
+				;;
+			*) ;;
+		esac
+	done
+	shift $((OPTIND - 1))
+
+	printf "${n}[${CB}${c}${p}${n}] ${NAME}: %s\n" "${*}" >&2
+}
+
+usage() {
+	echo "${USAGE}"
+}
+
+#
+# Entry
+#
+
+NAME="$(basename "${0}")"
+BASE="$(realpath "$(dirname "${0}")"/..)"
+
+log "Initializing virtual environment."
+
+if [ -d "${BASE}"/.venv ] && [ -f "${BASE}"/.venv/bin/activate ]; then
+	. "${BASE}"/.venv/bin/activate
+else
+	log -w "No virtual environment found!"
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+	log -e "Python3 not installed!"
+	exit 1
+fi
+
+if ! command -v flask >/dev/null 2>&1; then
+	log -e "Server (flask) not found!"
+	exit 1
+fi
+
+if ! command -v dotenv >/dev/null 2>&1; then
+	log -e "dotenv command not found!"
+	exit 1
+fi
+
+cd "${BASE}" >/dev/null 2>&1 || {
+	log -e "Failed to switch to project directory!"
+	exit 1
+}
+
+log "Initializing environment variables."
+
+if [ -f .env ]; then
+	MANIFEST_DIR="$(dotenv get MANIFEST_DIR 2>/dev/null)"
+	MANIFEST_NAME="$(dotenv get MANIFEST_NAME 2>/dev/null)"
+else
+	log -e ".env file not found!"
+	exit 1
+fi
+
+log "Starting the development server."
+
+exec flask run --debug --host 0.0.0.0 --port 5000 \
+	--extra-files "${MANIFEST_DIR:-.}/${MANIFEST_NAME:-manifest.json}" "${@}"
