@@ -79,16 +79,16 @@ if ! command -v dotenv >/dev/null 2>&1; then
 	exit 1
 fi
 
-cd "${BASE}" >/dev/null 2>&1 || {
+if ! cd "${BASE}" >/dev/null 2>&1; then
 	log -e "Failed to switch to project directory!"
 	exit 1
-}
+fi
 
 log "Initializing environment variables."
 
 if [ -f .env ]; then
-	MANIFEST_DIR="$(dotenv get MANIFEST_DIR 2>/dev/null)"
-	MANIFEST_NAME="$(dotenv get MANIFEST_NAME 2>/dev/null)"
+	CACHE_DIR="$(dotenv get CACHE_DIR 2>/dev/null)"
+	MANIFEST_FILE="$(dotenv get MANIFEST_FILE 2>/dev/null)"
 else
 	log -e ".env file not found!"
 	exit 1
@@ -97,4 +97,4 @@ fi
 log "Starting the development server."
 
 exec flask run --debug --host 0.0.0.0 --port 5000 \
-	--extra-files "${MANIFEST_DIR:-.}/${MANIFEST_NAME:-manifest.json}" "${@}"
+	--extra-files "${CACHE_DIR:-.}/${MANIFEST_FILE:-manifest.json}" "${@}"

@@ -114,10 +114,10 @@ if ! command -v gunicorn >/dev/null 2>&1; then
 	exit 1
 fi
 
-cd "${BASE}" >/dev/null 2>&1 || {
+if ! cd "${BASE}" >/dev/null 2>&1; then
 	log -e "Failed to switch to project directory!"
 	exit 1
-}
+fi
 
 log "Starting the production server."
 

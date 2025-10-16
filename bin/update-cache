@@ -1,0 +1,180 @@
+#!/bin/sh
+
+# Update the cache files
+
+#
+# Functions
+#
+
+log() {
+	if [ -t 2 ]; then
+		C0='\033[0m'
+		C1='\033[31m'
+		C2='\033[32m'
+		C3='\033[33m'
+		C4='\033[34m'
+		C5='\033[35m'
+		CB='\033[1m'
+	fi
+	n="${C0}"
+	c="${C4}"
+	p='*'
+	while getopts ":eswd" opt; do
+		case "${opt}" in
+			e)
+				p='✖'
+				c="${C1}"
+				;;
+			s)
+				p='✔'
+				c="${C2}"
+				;;
+			w)
+				p='!'
+				c="${C3}"
+				;;
+			d)
+				p='+'
+				c="${C5}"
+				;;
+			*) ;;
+		esac
+	done
+	shift $((OPTIND - 1))
+
+	printf "${n}[${CB}${c}${p}${n}] ${NAME}: %s\n" "${*}" >&2
+}
+
+usage() {
+	echo "${USAGE}"
+}
+
+#
+# Entry
+#
+
+NAME="$(basename "${0}")"
+BASE="$(realpath "$(dirname "${0}")"/..)"
+PID=
+
+USAGE="\
+Usage: ${NAME} [OPTION]
+
+Update the cache files.
+
+Options:
+  -p <PID>  Reload a running server.
+  -h        Show help message and exit."
+
+while getopts ":p:h" opt; do
+	case "${opt}" in
+		p) PID="${OPTARG}" ;;
+		h)
+			usage
+			exit
+			;;
+		:)
+			echo "${NAME}: option '-${OPTARG}' requires an argument."
+			usage
+			exit 1
+			;;
+		*)
+			echo "${NAME}: unknown option '-${OPTARG}'."
+			usage
+			exit 1
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+
+log "Initializing virtual environment."
+
+if [ -d "${BASE}"/.venv ] && [ -f "${BASE}"/.venv/bin/activate ]; then
+	. "${BASE}"/.venv/bin/activate
+else
+	log -w "No virtual environment found!"
+fi
+
+for cmd in dotenv convert ffmpeg; do
+	if ! command -v "${cmd}" >/dev/null 2>&1; then
+		log -e "${cmd} not installed!"
+		exit 1
+	fi
+done
+
+if ! cd "${BASE}" >/dev/null 2>&1; then
+	log -e "Failed to switch to project directory!"
+	exit 1
+fi
+
+log "Initializing environment variables."
+
+if [ -f .env ]; then
+	MEDIA_DIR=$(dotenv get MEDIA_DIR)
+	IMAGE_EXTS=$(dotenv get IMAGE_EXTS)
+	VIDEO_EXTS=$(dotenv get VIDEO_EXTS)
+	CACHE_DIR=$(dotenv get CACHE_DIR)
+	THUMBNAILS_FILE=$(dotenv get THUMBNAILS_FILE)
+	THUMBNAILS_EXT=$(dotenv get THUMBNAILS_EXT)
+else
+	log -e ".env file not found!"
+	exit 1
+fi
+
+log "Preparing cache directory."
+
+if ! mkdir -p "${CACHE_DIR}/${THUMBNAILS_FILE}"; then
+	log -e "Failed to prepare cache directory."
+	exit 1
+fi
+
+log "Generating image thumbnails."
+
+for img in $(eval "find \"${MEDIA_DIR}\"/ -iname *$(printf %s "${IMAGE_EXTS}" | sed -E 's/,/ -o -iname */g') -type f,l"); do
+	thumb=$(printf %s "${CACHE_DIR}/${THUMBNAILS_FILE}/${img}" | sed -E "s/${MEDIA_DIR}\///; s/\.[a-zA-Z0-9]+$/${THUMBNAILS_EXT}/")
+
+	if mkdir -p "$(dirname "${thumb}")" &&
+		convert "${img}" -resize 320x -quality 70 "${thumb}"; then
+		log -s "${img}"
+	else
+		log -e "${img}"
+	fi
+done
+
+log "Generating video thumbnails."
+
+for vid in $(eval "find \"${MEDIA_DIR}\"/ -iname *$(printf %s "${VIDEO_EXTS}" | sed -E "s/,/ -o -iname */g") -type f,l"); do
+	thumb=$(printf %s "${CACHE_DIR}/${THUMBNAILS_FILE}/${vid}" | sed -E "s/${MEDIA_DIR}\///; s/\.[a-zA-Z0-9]+$/${THUMBNAILS_EXT}/")
+
+	duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${vid}" | cut -d. -f1)
+	if [ -z "${duration}" ]; then
+		log -e "${vid}"
+		continue
+	fi
+
+	seek=$(echo "scale=0; ${duration} * 0.1 / 1" | bc)
+	if [ "${seek}" -le 0 ]; then
+		seek=1
+	fi
+
+	if mkdir -p "$(dirname "${thumb}")" &&
+		ffmpeg -n -ss "${seek}" -i "${vid}" -vf scale=320:-1 -q:v 7 -frames:v 1 "${thumb}" >/dev/null 2>&1; then
+		log -s "${vid}"
+	else
+		log -e "${vid}"
+	fi
+done
+
+log "Updating the manifest file."
+
+if bin/update-manifest >/dev/null 2>&1; then
+	log -s "Manifest file updated succesfully!"
+else
+	log -e "Failed to update the manifest file."
+	exit 1
+fi
+
+if [ -n "${PID}" ]; then
+	log "Reloading running servers."
+	bin/reload-server "${PID}"
+fi

@@ -32,8 +32,7 @@ def get_abs_path(path: str) -> str:
 
     abs_path = os.path.normpath(
         path if os.path.isabs(path) else os.path.abspath(
-            os.path.join(
-                config.MEDIA_DIR, path)))
+            os.path.join(config.MEDIA_DIR, path)))
 
     if os.path.commonpath([config.MEDIA_DIR, abs_path]) != config.MEDIA_DIR:
         raise ValueError(

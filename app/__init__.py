@@ -64,8 +64,8 @@ def load_gallery_data(force_new: bool = False) -> dict:
     gallery_info = manifest.get_manifest(force_new=force_new)
     gallery_data = {
         "directories": {},
-        "media_files": set(
-            gallery_info.get("media_files"))}
+        "media_files": set(gallery_info.get("media_files")),
+        "thumbnails": set(gallery_info.get("thumbnails"))}
 
     for path, info in gallery_info.get("directories").items():
         if path:
@@ -89,7 +89,7 @@ def load_gallery_data(force_new: bool = False) -> dict:
 
         gallery_data["directories"][path] = {
             "breadcrumbs": breadcrumbs,
-            "media": media,
-            "subdirs": subdirs}
+            "items": media + subdirs,
+            "count": len(media) + len(subdirs)}
 
     return gallery_data

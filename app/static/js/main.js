@@ -1,59 +1,101 @@
-// const preloader = document.querySelector("#preloader");
-// if (preloader) {
-//     window.addEventListener("load", () => {
-//         setTimeout(() => {
-//             preloader.classList.add("loaded");
-//         }, 1000);
-//         setTimeout(() => {
-//             preloader.remove();
-//         }, 2000);
-//     });
-// }
+/*
+ * Wow
+ */
 
-// var $wow = new WOW();
-// $wow.init();
+// var $wow = new WOW().init();
 
-$(function () {
-    var $pckry = $(".gallery-container").packery({
-        itemSelector: ".gallery-item",
-        columnWidth: ".gallery-item-sizer",
-        gutter: ".gallery-gutter-sizer",
-    });
+/*
+ * General
+ */
 
-    $pckry
-        .imagesLoaded()
-        .progress(function (instance, image) {
-            $pckry.packery("layout");
-            console.log("Loaded: ", image.img.src);
-        })
-
-        .done(function () {
-            console.log("All images loaded.");
-        })
-
-        .fail(function () {
-            console.log("An image or more failed to load.");
-        })
-
-        .always(function () {
-            $pckry.packery("layout");
-            // $pckry.find(".gallery-item").each(function (i, item) {
-            //     var draggie = new Draggabilly(item);
-            //     $pckry.packery("bindDraggabillyEvents", draggie);
-            // });
-            // console.log("Draggabilly events bound.");
-        });
-
-    $pckry.find("video").each(function (index, video) {
-        $(video).on("loadedmetadata", function () {
-            $pckry.packery("layout");
-        });
-    });
+var $container = $(".gallery-container").packery({
+    itemSelector: ".gallery-item",
+    columnWidth: ".gallery-item-sizer",
+    gutter: ".gallery-gutter-sizer",
 });
 
+/*
+ * Packery
+ */
+
+var $pckry = $container.data("packery");
+
+$container
+    .imagesLoaded()
+    .progress(function (instance, image) {
+        $container.packery("layout");
+    })
+    .always(function () {
+        $container.packery("layout");
+        // $pckry.find(".gallery-item").each(function (i, item) {
+        //     var draggie = new Draggabilly(item);
+        //     $pckry.packery("bindDraggabillyEvents", draggie);
+        // });
+        // console.log("Draggabilly events bound.");
+    });
+
+/*
+ * Infinite Scroll
+ */
+
+var isLastPage = $container.data("last");
+var currentPage = 0;
+
+function initInfiniteScroll() {
+    $container.infiniteScroll({
+        path: function () {
+            if (!isLastPage) {
+                var url = $container.data("url");
+                var path = $container.data("path");
+                var pageNumber = currentPage + 1;
+
+                return `${url}?path=${path}&page=${pageNumber}`;
+            }
+        },
+        append: ".gallery-item",
+        outlayer: $pckry,
+        prefill: true,
+        // scrollThreshold: 100,
+        // loadOnScroll: false,
+        history: false,
+        // historyTitle: false,
+        status: ".page-load-status",
+        button: ".view-more-button",
+        checkLastPage: "#next-page-selector",
+    });
+}
+
+initInfiniteScroll();
+var $error = $(".infinite-scroll-error");
+
+$container.on("request.infiniteScroll", function () {
+    $error.addClass("visually-hidden");
+});
+
+$container.on("load.infiniteScroll", function (event, body, path, response) {
+    currentPage += 1;
+    isLastPage = $(body).find(".gallery-container").data("last");
+    console.log(`Loaded page: ${path}, isLastPage=${isLastPage}`);
+});
+
+$container.on("error.infiniteScroll", function () {
+    $error.removeClass("visually-hidden");
+});
+
+$("#retry-button").on("click", function () {
+    $container.infiniteScroll("destroy");
+    initInfiniteScroll();
+    $container.infiniteScroll("loadNextPage");
+});
+
+/*
+ * Fancybox
+ */
+
 Fancybox.bind("[data-fancybox]", {
-    idle: 2000,
     closeExisting: true,
+    idle: 3000,
+    // TODO: Responsive thumbnails
 
     mainStyle: {
         "--f-toolbar-padding": "8px",
@@ -71,7 +113,13 @@ Fancybox.bind("[data-fancybox]", {
             display: {
                 left: ["counter"],
                 middle: [],
-                right: ["autoplay", "thumbs", "download", "close"],
+                right: [
+                    "autoplay",
+                    "fullscreen",
+                    "thumbs",
+                    "download",
+                    "close",
+                ],
             },
         },
 

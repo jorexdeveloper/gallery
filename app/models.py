@@ -27,13 +27,16 @@ class MediaItem:
     ext: str = ""
     """The extension of the media item."""
 
+    thumb: str = ""
+    """The path to the thumbnail image of the media item."""
+
     def __post_init__(self):
         """Set optional attributes."""
 
-        info = os.path.splitext(os.path.basename(self.path))
+        info = os.path.splitext(self.path)
 
         if not self.name:
-            self.name = info[0]
+            self.name = os.path.basename(info[0])
 
         if not self.ext:
             self.ext = info[1]
@@ -43,8 +46,10 @@ class MediaItem:
                 self.type = "video"
             elif self.ext in config.IMAGE_EXTS:
                 self.type = "image"
-            else:
-                self.type = "unknown"
+
+        if not self.thumb:
+            self.thumb = os.path.join(
+                info[0] + config.THUMBNAILS_EXT)
 
 
 @dataclasses.dataclass

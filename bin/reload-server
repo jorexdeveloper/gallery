@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Update the manifest file
+# Reload running server(s)
 
 #
 # Functions
@@ -54,21 +54,17 @@ usage() {
 #
 
 NAME="$(basename "${0}")"
-BASE="$(realpath "$(dirname "${0}")"/..)"
-PID=
 
 USAGE="\
-Usage: ${NAME} [OPTION]
+Usage: ${NAME} PID...
 
-Update the manifest file.
+Reload running server(s).
 
 Options:
-  -p <PID>  Reload a running server.
   -h        Show help message and exit."
 
-while getopts ":p:h" opt; do
+while getopts ":h" opt; do
 	case "${opt}" in
-		p) PID="${OPTARG}" ;;
 		h)
 			usage
 			exit
@@ -87,34 +83,17 @@ while getopts ":p:h" opt; do
 done
 shift $((OPTIND - 1))
 
-log "Initializing virtual environment."
-
-if [ -d "${BASE}"/.venv ] && [ -f "${BASE}"/.venv/bin/activate ]; then
-	. "${BASE}"/.venv/bin/activate
-else
-	log -w "No virtual environment found!"
+if [ ! ${#} -gt 0 ]; then
+	usage
+	exit
 fi
 
-if ! command -v python3 >/dev/null 2>&1; then
-	log -e "Python3 not installed!"
-	exit 1
-fi
+for pid in "${@}"; do
+	if pgrep "${pid}" >/dev/null 2>&1; then
+		log "Reloading server: ${pid}"
 
-if ! cd "${BASE}" >/dev/null 2>&1; then
-	log -e "Failed to switch to project directory!"
-	exit 1
-fi
-
-log "Updating the manifest file."
-
-if python3 -B -m app.manifest >/dev/null 2>&1; then
-	log -s "Manifest file updated succesfully!"
-else
-	log -e "Failed to update the manifest file."
-	exit 1
-fi
-
-if [ -n "${PID}" ]; then
-	log "Reloading running servers."
-	bin/reload-server "${PID}" >/dev/null 2>&1
-fi
+		kill -HUP "${pid}"
+	else
+		log -e "No running server with PID: ${pid}"
+	fi
+done

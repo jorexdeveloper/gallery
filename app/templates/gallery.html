@@ -1,58 +1,44 @@
-<div class="gallery-container container-xl">
-    <div class="gallery-item-sizer"></div>
-    <div class="gallery-gutter-sizer"></div>
-    {% for media_item in media %}
+{% for item in items %} {% if item.type == "image" or item.type == "video" %}
+<a
+    class="gallery-item d-flex flex-column wow fadeIn"
+    data-fancybox="gallery"
+    data-caption="{{ item.name }}"
+    data-src="{{ url_for('gallery.media', path=item.path) }}"
+>
+    <img
+        class="d-block"
+        src="{{ url_for('gallery.thumbnails', path=item.thumb) }}"
+        alt="{{ item.name }}"
+        loading="lazy"
+    />
+    {% if item.type == "video" %}
     <div
-        class="gallery-item d-flex flex-column"
-        data-fancybox="gallery"
-        data-caption="{{ media_item.name }}"
-        data-src="{{ url_for('gallery.media', path=media_item.path) }}"
+        class="play-icon position-absolute top-50 start-50 translate-middle text-light"
     >
-        {% if media_item.type == 'video' %}
-        <video
-            src="{{ url_for('gallery.media', path=media_item.path) }}"
-            preload="metadata"
-            loading="lazy"
-        ></video>
-        <div class="play-icon position-absolute top-50 start-50 translate-middle shadow text-light">
-            <i class="fas fa-play"></i>
-        </div>
-        {% else %}
-        <img
-            src="{{ url_for('gallery.media', path=media_item.path) }}"
-            alt="{{ media_item.name }}"
-            loading="lazy"
-        />
-        {% endif %}
-        <div class="media-info">
-            <div class="media-title">{{ media_item.name }}</div>
-        </div>
+        <i class="fas fa-play"></i>
     </div>
-    {% endfor %} {% for dir_item in subdirs %}
-    <a
-        class="gallery-item d-flex flex-column"
-        href="{{ url_for('gallery.page', path=dir_item.path) }}"
-    >
-        {% if dir_item.thumbnail.type == 'video' %}
-        <video
-            src="{{ url_for('gallery.media', path=dir_item.thumbnail.path) }}"
-            preload="metadata"
-            loading="lazy"
-        ></video>
-        {% else %}
-        <img
-            src="{{ url_for('gallery.media', path=dir_item.thumbnail.path) }}"
-            alt="{{ dir_item.name }}"
-            loading="lazy"
-        />
-        {% endif %}
-        <div class="media-info">
-            <div class="media-title">{{ dir_item.name }}</div>
-        </div>
-        <div class="folder-badge">
-            <i class="fas fa-folder-open"></i>
-            <span> {{ dir_item.comment }} </span>
-        </div>
-    </a>
-    {% endfor %}
-</div>
+    {% endif %}
+    <div class="media-info text-light user-select-all wow fadeIn">
+        <div class="media-title">{{ item.name }}</div>
+    </div>
+</a>
+{% else %}
+<a
+    class="gallery-item d-flex flex-column wow fadeIn"
+    href="{{ url_for('gallery.path', path=item.path) }}"
+>
+    <img
+        class="d-block"
+        src="{{ url_for('gallery.thumbnails', path=item.thumbnail.thumb) }}"
+        alt="{{ item.name }}"
+        loading="lazy"
+    />
+    <div class="media-info text-light user-select-all">
+        <div class="media-title">{{ item.name }}</div>
+    </div>
+    <div class="folder-badge text-light user-select-all">
+        <i class="fas fa-folder-open"></i>
+        <span>{{ item.comment }}</span>
+    </div>
+</a>
+{% endif %} {% endfor %}

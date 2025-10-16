@@ -15,7 +15,8 @@ def _gen_manifest(path: str = config.MEDIA_DIR) -> dict:
         dict: The manifest information.
     """
 
-    abs_path, directories, media_files = utils.get_abs_path(path), {}, []
+    abs_path, directories, media_files, thumbnails = utils.get_abs_path(path), {
+    }, [], []
 
     if os.path.isdir(abs_path):
         for root, dirs, files in os.walk(config.MEDIA_DIR, topdown=False):
@@ -31,6 +32,9 @@ def _gen_manifest(path: str = config.MEDIA_DIR) -> dict:
                 if utils.is_media(file_path):
                     root_media.append(file_path)
                     media_files.append(file_path)
+                    thumbnails.append(
+                        os.path.splitext(file_path)[0] +
+                        config.THUMBNAILS_EXT)
 
             root_count = len(root_media)
             root_thumbnail = root_media[0] if root_count else None
@@ -70,16 +74,21 @@ def _gen_manifest(path: str = config.MEDIA_DIR) -> dict:
 
         media_files.append(rel_path)
 
-    return {"directories": directories, "media_files": media_files}
+        thumbnails.append(
+            os.path.splitext(rel_path)[0] +
+            config.THUMBNAILS_EXT)
+
+    return {"directories": directories,
+            "media_files": media_files, "thumbnails": thumbnails}
 
 
-def get_manifest(*, name: str = config.MANIFEST_NAME,
-                 dir: str = config.MANIFEST_DIR, force_new: bool = False) -> dict:
+def get_manifest(*, name: str = config.MANIFEST_FILE,
+                 dir: str = config.CACHE_DIR, force_new: bool = False) -> dict:
     """Return the cached manifest information, or generate new information if it's absent.
 
     Args:
-        name (str, optional): The name of the manifest file. Defaults to `config.MANIFEST_NAME`.
-        dir (str, optional): The directory of the manifest file. Defaults to `config.MANIFEST_DIR`.
+        name (str, optional): The name of the manifest file. Defaults to `config.MANIFEST_FILE`.
+        dir (str, optional): The directory of the manifest file. Defaults to `config.CACHE_DIR`.
         force_new (bool, optional): If `True`, generate new manifest information. Defaults to `False`.
 
     Returns:
@@ -99,13 +108,13 @@ def get_manifest(*, name: str = config.MANIFEST_NAME,
 
 
 def export_manifest(
-        manifest: dict, *, name: str = config.MANIFEST_NAME, dir: str = config.MANIFEST_DIR) -> None:
+        manifest: dict, *, name: str = config.MANIFEST_FILE, dir: str = config.CACHE_DIR) -> None:
     """Export the manifest information to a JSON file.
 
     Args:
         manifest (dict): The manifest information.
-        name (str, optional): The name of the manifest file. Defaults to `config.MANIFEST_NAME`.
-        dir (str, optional): The directory in which to save the manifest file. Defaults to `config.MANIFEST_DIR`.
+        name (str, optional): The name of the manifest file. Defaults to `config.MANIFEST_FILE`.
+        dir (str, optional): The directory in which to save the manifest file. Defaults to `config.CACHE_DIR`.
     """
 
     os.makedirs(dir, exist_ok=True)
@@ -117,4 +126,5 @@ def export_manifest(
 if __name__ == "__main__":
     export_manifest(
         get_manifest(force_new=True))
+
     print(f"{os.path.relpath(config.MANIFEST_PATH)} created successfully!")
