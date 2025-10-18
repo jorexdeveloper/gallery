@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Update the cache files
 
@@ -7,20 +7,28 @@
 #
 
 log() {
-	if [ -t 2 ]; then
-		C0='\033[0m'
-		C1='\033[31m'
-		C2='\033[32m'
-		C3='\033[33m'
-		C4='\033[34m'
-		C5='\033[35m'
-		CB='\033[1m'
+	if [[ -t 2 ]]; then
+		local C0=$'\033[0m'
+		local C1=$'\033[31m'
+		local C2=$'\033[32m'
+		local C3=$'\033[33m'
+		local C4=$'\033[34m'
+		local C5=$'\033[35m'
+		local CB=$'\033[1m'
 	fi
-	n="${C0}"
-	c="${C4}"
-	p='*'
-	while getopts ":eswd" opt; do
+
+	local n="${C0}"
+	local c="${C4}"
+	local p='*'
+	local e=
+
+	while getopts ":ceswd" opt; do
 		case "${opt}" in
+			c)
+				p='✖'
+				c="${C1}"
+				e=1
+				;;
 			e)
 				p='✖'
 				c="${C1}"
@@ -41,8 +49,13 @@ log() {
 		esac
 	done
 	shift $((OPTIND - 1))
+	unset OPTIND
 
 	printf "${n}[${CB}${c}${p}${n}] ${NAME}: %s\n" "${*}" >&2
+
+	if [[ ${e} ]]; then
+		exit 1
+	fi
 }
 
 usage() {
@@ -55,20 +68,33 @@ usage() {
 
 NAME="$(basename "${0}")"
 BASE="$(realpath "$(dirname "${0}")"/..)"
-PID=
+
+IMAGES=1
+VIDEOS=1
+PID=()
 
 USAGE="\
-Usage: ${NAME} [OPTION]
+Usage: ${NAME} [OPTION] [PATH]...
 
 Update the cache files.
 
 Options:
+  -i        Generate image thumbnails only.
+  -v        Generate video thumbnails only.
   -p <PID>  Reload a running server.
   -h        Show help message and exit."
 
-while getopts ":p:h" opt; do
+while getopts ":ivp:h" opt; do
 	case "${opt}" in
-		p) PID="${OPTARG}" ;;
+		i)
+			VIDEOS=
+			;;
+		v)
+			IMAGES=
+			;;
+		p)
+			PID+=("${OPTARG}")
+			;;
 		h)
 			usage
 			exit
@@ -86,95 +112,124 @@ while getopts ":p:h" opt; do
 	esac
 done
 shift $((OPTIND - 1))
+unset OPTIND
 
 log "Initializing virtual environment."
 
-if [ -d "${BASE}"/.venv ] && [ -f "${BASE}"/.venv/bin/activate ]; then
+if [[ -d ${BASE}/.venv && -f ${BASE}/.venv/bin/activate ]]; then
 	. "${BASE}"/.venv/bin/activate
 else
 	log -w "No virtual environment found!"
 fi
 
-for cmd in dotenv convert ffmpeg; do
-	if ! command -v "${cmd}" >/dev/null 2>&1; then
-		log -e "${cmd} not installed!"
-		exit 1
+for cmd in dotenv magick ffmpeg; do
+	if ! command -v "${cmd}" &>/dev/null; then
+		log -c "${cmd} is not installed!"
 	fi
 done
 
-if ! cd "${BASE}" >/dev/null 2>&1; then
-	log -e "Failed to switch to project directory!"
-	exit 1
+if ! cd "${BASE}" &>/dev/null; then
+	log -c "Failed to change to project directory!"
 fi
 
 log "Initializing environment variables."
 
-if [ -f .env ]; then
-	MEDIA_DIR=$(dotenv get MEDIA_DIR)
-	IMAGE_EXTS=$(dotenv get IMAGE_EXTS)
-	VIDEO_EXTS=$(dotenv get VIDEO_EXTS)
-	CACHE_DIR=$(dotenv get CACHE_DIR)
-	THUMBNAILS_FILE=$(dotenv get THUMBNAILS_FILE)
-	THUMBNAILS_EXT=$(dotenv get THUMBNAILS_EXT)
+if [[ -f .env ]]; then
+	eval "$(dotenv list --format shell | grep -e ^MEDIA_DIR -e ^IMAGE_EXTS -e ^VIDEO_EXTS -e ^CACHE_DIR -e ^THUMBNAILS_FILE -e ^THUMBNAILS_EXT)"
+
+	for var in MEDIA_DIR IMAGE_EXTS VIDEO_EXTS CACHE_DIR THUMBNAILS_FILE THUMBNAILS_EXT; do
+		if [[ ! "${!var}" ]]; then
+			log -c "Variable ${var} is not set!"
+		fi
+	done
 else
-	log -e ".env file not found!"
-	exit 1
+	log -c ".env file not found!"
+fi
+
+FIND_DIRS=()
+MEDIA_DIR=$(realpath -sm "${MEDIA_DIR}")
+
+if [[ ${#} -gt 0 ]]; then
+	for dir in "${@}"; do
+		target=$(realpath -sm "${dir}")
+
+		if [[ ${target:0:${#MEDIA_DIR}} == "${MEDIA_DIR}" ]]; then
+			FIND_DIRS+=("${target}")
+		else
+			log -c "${dir} is not within the media directory."
+		fi
+	done
+else
+	FIND_DIRS+=("${MEDIA_DIR}"/)
 fi
 
 log "Preparing cache directory."
 
 if ! mkdir -p "${CACHE_DIR}/${THUMBNAILS_FILE}"; then
-	log -e "Failed to prepare cache directory."
-	exit 1
+	log -c "Failed to prepare cache directory."
 fi
 
-log "Generating image thumbnails."
+if [[ ${IMAGES} ]]; then
+	log "Generating image thumbnails."
 
-for img in $(eval "find \"${MEDIA_DIR}\"/ -iname *$(printf %s "${IMAGE_EXTS}" | sed -E 's/,/ -o -iname */g') -type f,l"); do
-	thumb=$(printf %s "${CACHE_DIR}/${THUMBNAILS_FILE}/${img}" | sed -E "s/${MEDIA_DIR}\///; s/\.[a-zA-Z0-9]+$/${THUMBNAILS_EXT}/")
+	eval "find \"\${FIND_DIRS[@]}\" \( -iname \*${IMAGE_EXTS//,/ -o -iname *} -type f,l \) -print0" | while IFS= read -r -d '' img; do
+		file="${img#"${MEDIA_DIR}"/}"
+		thumb="${CACHE_DIR}/${THUMBNAILS_FILE}/${file%.*}${THUMBNAILS_EXT}"
 
-	if mkdir -p "$(dirname "${thumb}")" &&
-		convert "${img}" -resize 320x -quality 70 "${thumb}"; then
-		log -s "${img}"
-	else
-		log -e "${img}"
-	fi
-done
+		if [[ -f "${thumb}" ]]; then
+			continue
+		fi
 
-log "Generating video thumbnails."
+		if mkdir -p "$(dirname "${thumb}")" && magick "${img}"[0] -resize 320x -quality 70 "${thumb}"; then
+			log -s "${file}"
+		else
+			log -e "${file}"
+		fi
+	done
+fi
 
-for vid in $(eval "find \"${MEDIA_DIR}\"/ -iname *$(printf %s "${VIDEO_EXTS}" | sed -E "s/,/ -o -iname */g") -type f,l"); do
-	thumb=$(printf %s "${CACHE_DIR}/${THUMBNAILS_FILE}/${vid}" | sed -E "s/${MEDIA_DIR}\///; s/\.[a-zA-Z0-9]+$/${THUMBNAILS_EXT}/")
+if [[ ${VIDEOS} ]]; then
+	log "Generating video thumbnails."
 
-	duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${vid}" | cut -d. -f1)
-	if [ -z "${duration}" ]; then
-		log -e "${vid}"
-		continue
-	fi
+	eval "find \"\${FIND_DIRS[@]}\" \( -iname \*${VIDEO_EXTS//,/ -o -iname *} -type f,l \) -print0" | while IFS= read -r -d '' vid; do
+		file="${vid#"${MEDIA_DIR}"/}"
+		thumb="${CACHE_DIR}/${THUMBNAILS_FILE}/${file%.*}${THUMBNAILS_EXT}"
 
-	seek=$(echo "scale=0; ${duration} * 0.1 / 1" | bc)
-	if [ "${seek}" -le 0 ]; then
-		seek=1
-	fi
+		if [[ -f "${thumb}" ]]; then
+			continue
+		fi
 
-	if mkdir -p "$(dirname "${thumb}")" &&
-		ffmpeg -n -ss "${seek}" -i "${vid}" -vf scale=320:-1 -q:v 7 -frames:v 1 "${thumb}" >/dev/null 2>&1; then
-		log -s "${vid}"
-	else
-		log -e "${vid}"
-	fi
-done
+		duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${vid}" | cut -d. -f1)
+
+		if [[ ! ${duration} || ${duration} -lt 1 ]]; then
+			log -e "${file}"
+			continue
+		fi
+
+		seek=$(echo "scale=0; ${duration} * 10 / 100" | bc)
+
+		if [[ "${seek}" -le 0 ]]; then
+			seek=1
+		fi
+
+		if mkdir -p "$(dirname "${thumb}")" && { ffmpeg -n -nostdin -ss "${seek}" -i "${vid}" -vf "select=eq(pict_type\,I),scale=320:-1" -frames:v 1 -q:v 5 "${thumb}" || ffmpeg -n -nostdin -ss "${seek}" -i "${vid}" -vf "scale=320:-1" -frames:v 1 -q:v 5 "${thumb}"; } &>/dev/null; then
+			log -s "${file}"
+		else
+			log -e "${file}"
+		fi
+	done
+fi
 
 log "Updating the manifest file."
 
-if bin/update-manifest >/dev/null 2>&1; then
+if bash bin/update-manifest &>/dev/null; then
 	log -s "Manifest file updated succesfully!"
 else
-	log -e "Failed to update the manifest file."
-	exit 1
+	log -c "Failed to update the manifest file."
 fi
 
-if [ -n "${PID}" ]; then
+if [[ ${#PID} -gt 0 ]]; then
 	log "Reloading running servers."
-	bin/reload-server "${PID}"
+
+	bash bin/reload-server "${PID[@]}"
 fi

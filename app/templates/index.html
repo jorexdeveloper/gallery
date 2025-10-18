@@ -83,56 +83,58 @@
 
     <body class="d-flex flex-column min-vw-100 min-vh-100 p-0 m-0">
         <main
-            class="container-fluid flex-fill d-flex flex-column align-items-center justify-content-center w-100 h-100 p-0 m-0"
+            class="container-fluid flex-fill d-flex flex-column w-100 h-100 p-0 m-0"
         >
-            <div
-                class="gallery-container container-xl"
-                data-url="{{ url_for('gallery.pages') }}"
-                data-last="{{ 'true' if last else 'false' }}"
-                data-path="{{ path }}"
-            >
-                <div class="gallery-item-sizer"></div>
-                <div class="gallery-gutter-sizer"></div>
-                {% include "gallery.html" %}
-            </div>
-            <div
-                class="page-load-status container-xl d-flex flex-column align-items-center justify-content-center"
-            >
+            <div class="gallery-layout container-xl m-0">
                 <div
-                    class="infinite-scroll-request loader-ellips position-relative p-3 m-3"
+                    class="gallery-container container-xl"
+                    data-url="{{ url_for('gallery.pages') }}"
+                    data-last="{{ 'true' if last else 'false' }}"
+                    data-path="{{ path }}"
                 >
-                    <span
-                        class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
-                    ></span>
-                    <span
-                        class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
-                    ></span>
-                    <span
-                        class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
-                    ></span>
-                    <span
-                        class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
-                    ></span>
+                    <div class="gallery-item-sizer"></div>
+                    <div class="gallery-gutter-sizer"></div>
+                    {% include "gallery.html" %}
                 </div>
                 <div
-                    class="infinite-scroll-error d-flex flex-column align-items-center justify-content-center p-3 m-3 visually-hidden"
+                    class="page-load-status container-xl d-flex flex-column align-items-center justify-content-center"
                 >
-                    <p class="text-center text-wrap fs-6 user-select-none">
-                        Failed to load! Check your internet connection and try
-                        again.
-                    </p>
-                    <button
-                        id="retry-button"
-                        type="button"
-                        class="btn btn-primary"
+                    <div
+                        class="infinite-scroll-request loader-ellips position-relative p-3 m-3"
                     >
-                        Retry
-                    </button>
+                        <span
+                            class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
+                        ></span>
+                        <span
+                            class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
+                        ></span>
+                        <span
+                            class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
+                        ></span>
+                        <span
+                            class="loader-ellips__dot d-block position-absolute rounded-circle bg-primary"
+                        ></span>
+                    </div>
+                    <div
+                        class="infinite-scroll-error d-flex flex-column align-items-center justify-content-center p-3 m-3 visually-hidden"
+                    >
+                        <p class="text-center text-wrap fs-6 user-select-none">
+                            Failed to load! Check your internet connection and
+                            try again.
+                        </p>
+                        <button
+                            id="retry-button"
+                            type="button"
+                            class="btn btn-primary"
+                        >
+                            Retry
+                        </button>
+                    </div>
                 </div>
+                {% if not last %}
+                <div id="next-page-selector"></div>
+                {% endif %}
             </div>
-            {% if not last %}
-            <div id="next-page-selector"></div>
-            {% endif %}
         </main>
 
         <footer class="container-fluid p-0">

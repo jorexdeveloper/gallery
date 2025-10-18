@@ -5,7 +5,7 @@
 // var $wow = new WOW().init();
 
 /*
- * General
+ * Packery
  */
 
 var $container = $(".gallery-container").packery({
@@ -13,33 +13,31 @@ var $container = $(".gallery-container").packery({
     columnWidth: ".gallery-item-sizer",
     gutter: ".gallery-gutter-sizer",
 });
+var $pckry = $container.data("packery");
 
 /*
- * Packery
+ * Images Loaded
  */
-
-var $pckry = $container.data("packery");
 
 $container
     .imagesLoaded()
-    .progress(function (instance, image) {
+    .progress(function () {
         $container.packery("layout");
     })
     .always(function () {
         $container.packery("layout");
-        // $pckry.find(".gallery-item").each(function (i, item) {
+        // $container.find(".gallery-item").each(function (i, item) {
         //     var draggie = new Draggabilly(item);
-        //     $pckry.packery("bindDraggabillyEvents", draggie);
+        //     $container.packery("bindDraggabillyEvents", draggie);
         // });
-        // console.log("Draggabilly events bound.");
     });
 
 /*
  * Infinite Scroll
  */
 
-var isLastPage = $container.data("last");
 var currentPage = 0;
+var isLastPage = $container.data("last");
 
 function initInfiniteScroll() {
     $container.infiniteScroll({
@@ -52,34 +50,34 @@ function initInfiniteScroll() {
                 return `${url}?path=${path}&page=${pageNumber}`;
             }
         },
-        append: ".gallery-item",
-        outlayer: $pckry,
         prefill: true,
+        append: ".gallery-item",
         // scrollThreshold: 100,
         // loadOnScroll: false,
-        history: false,
         // historyTitle: false,
         status: ".page-load-status",
         button: ".view-more-button",
         checkLastPage: "#next-page-selector",
+        outlayer: $pckry,
+        history: false,
     });
 }
 
 initInfiniteScroll();
-var $error = $(".infinite-scroll-error");
+
+var $scrollError = $(".infinite-scroll-error");
 
 $container.on("request.infiniteScroll", function () {
-    $error.addClass("visually-hidden");
+    $scrollError.addClass("visually-hidden");
 });
 
-$container.on("load.infiniteScroll", function (event, body, path, response) {
+$container.on("load.infiniteScroll", function (event, body) {
     currentPage += 1;
     isLastPage = $(body).find(".gallery-container").data("last");
-    console.log(`Loaded page: ${path}, isLastPage=${isLastPage}`);
 });
 
 $container.on("error.infiniteScroll", function () {
-    $error.removeClass("visually-hidden");
+    $scrollError.removeClass("visually-hidden");
 });
 
 $("#retry-button").on("click", function () {

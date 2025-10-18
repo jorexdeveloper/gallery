@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Run the development server
 
@@ -7,20 +7,28 @@
 #
 
 log() {
-	if [ -t 2 ]; then
-		C0='\033[0m'
-		C1='\033[31m'
-		C2='\033[32m'
-		C3='\033[33m'
-		C4='\033[34m'
-		C5='\033[35m'
-		CB='\033[1m'
+	if [[ -t 2 ]]; then
+		local C0=$'\033[0m'
+		local C1=$'\033[31m'
+		local C2=$'\033[32m'
+		local C3=$'\033[33m'
+		local C4=$'\033[34m'
+		local C5=$'\033[35m'
+		local CB=$'\033[1m'
 	fi
-	n="${C0}"
-	c="${C4}"
-	p='*'
-	while getopts ":eswd" opt; do
+
+	local n="${C0}"
+	local c="${C4}"
+	local p='*'
+	local e=
+
+	while getopts ":ceswd" opt; do
 		case "${opt}" in
+			c)
+				p='✖'
+				c="${C1}"
+				e=1
+				;;
 			e)
 				p='✖'
 				c="${C1}"
@@ -41,8 +49,13 @@ log() {
 		esac
 	done
 	shift $((OPTIND - 1))
+	unset OPTIND
 
 	printf "${n}[${CB}${c}${p}${n}] ${NAME}: %s\n" "${*}" >&2
+
+	if [[ ${e} ]]; then
+		exit 1
+	fi
 }
 
 usage() {
@@ -58,43 +71,40 @@ BASE="$(realpath "$(dirname "${0}")"/..)"
 
 log "Initializing virtual environment."
 
-if [ -d "${BASE}"/.venv ] && [ -f "${BASE}"/.venv/bin/activate ]; then
+if [[ -d ${BASE}/.venv && -f ${BASE}/.venv/bin/activate ]]; then
 	. "${BASE}"/.venv/bin/activate
 else
 	log -w "No virtual environment found!"
 fi
 
-if ! command -v python3 >/dev/null 2>&1; then
-	log -e "Python3 not installed!"
-	exit 1
-fi
+for cmd in dotenv flask; do
+	if ! command -v "${cmd}" &>/dev/null; then
+		log -c "${cmd} is not installed!"
+	fi
+done
 
-if ! command -v flask >/dev/null 2>&1; then
-	log -e "Server (flask) not found!"
-	exit 1
-fi
-
-if ! command -v dotenv >/dev/null 2>&1; then
-	log -e "dotenv command not found!"
-	exit 1
-fi
-
-if ! cd "${BASE}" >/dev/null 2>&1; then
-	log -e "Failed to switch to project directory!"
-	exit 1
+if ! cd "${BASE}" &>/dev/null; then
+	log -c "Failed to change to project directory!"
 fi
 
 log "Initializing environment variables."
 
-if [ -f .env ]; then
-	CACHE_DIR="$(dotenv get CACHE_DIR 2>/dev/null)"
-	MANIFEST_FILE="$(dotenv get MANIFEST_FILE 2>/dev/null)"
+if [[ -f .env ]]; then
+	eval "$(dotenv list --format shell | grep -e ^CACHE_DIR -e ^MANIFEST_FILE)"
+
+	for var in CACHE_DIR MANIFEST_FILE; do
+		if [[ ! "${!var}" ]]; then
+			log -c "Variable ${var} is not set!"
+		fi
+	done
 else
-	log -e ".env file not found!"
-	exit 1
+	log -c ".env file not found!"
 fi
 
 log "Starting the development server."
 
-exec flask run --debug --host 0.0.0.0 --port 5000 \
+exec flask run \
+	--debug \
+	--host 0.0.0.0 \
+	--port 5000 \
 	--extra-files "${CACHE_DIR:-.}/${MANIFEST_FILE:-manifest.json}" "${@}"

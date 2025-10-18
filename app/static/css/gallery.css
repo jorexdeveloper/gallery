@@ -1,6 +1,15 @@
+/*
+ * Layout
+ */
+
+.gallery-layout {
+    --gutter: 1px;
+
+    padding: calc(2 * var(--gutter));
+}
+
 .gallery-container {
     --columns: 1;
-    --gutter: 1px;
     --total-spacing: calc((var(--columns) - 1) * var(--gutter));
 
     padding: var(--gutter) 0px;
@@ -95,66 +104,6 @@
     z-index: 2;
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
-}
-
-/*
- * Page Loader
- */
-
-.loader-ellips {
-    font-size: 36px;
-    width: 4rem;
-    height: 1rem;
-}
-
-.loader-ellips__dot {
-    width: 1rem;
-    height: 1rem;
-    animation-duration: 0.5s;
-    animation-timing-function: ease;
-    animation-iteration-count: infinite;
-}
-
-.loader-ellips__dot:nth-child(1),
-.loader-ellips__dot:nth-child(2) {
-    left: 0;
-}
-
-.loader-ellips__dot:nth-child(3) {
-    left: 1.5rem;
-}
-
-.loader-ellips__dot:nth-child(4) {
-    left: 3rem;
-}
-
-@keyframes reveal {
-    from {
-        transform: scale(0.001);
-    }
-    to {
-        transform: scale(1);
-    }
-}
-
-@keyframes slide {
-    to {
-        transform: translateX(1.5rem);
-    }
-}
-
-.loader-ellips__dot:nth-child(1) {
-    animation-name: reveal;
-}
-
-.loader-ellips__dot:nth-child(2),
-.loader-ellips__dot:nth-child(3) {
-    animation-name: slide;
-}
-
-.loader-ellips__dot:nth-child(4) {
-    animation-name: reveal;
-    animation-direction: reverse;
 }
 
 /*

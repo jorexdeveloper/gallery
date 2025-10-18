@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Reload running server(s)
 
@@ -7,20 +7,28 @@
 #
 
 log() {
-	if [ -t 2 ]; then
-		C0='\033[0m'
-		C1='\033[31m'
-		C2='\033[32m'
-		C3='\033[33m'
-		C4='\033[34m'
-		C5='\033[35m'
-		CB='\033[1m'
+	if [[ -t 2 ]]; then
+		local C0=$'\033[0m'
+		local C1=$'\033[31m'
+		local C2=$'\033[32m'
+		local C3=$'\033[33m'
+		local C4=$'\033[34m'
+		local C5=$'\033[35m'
+		local CB=$'\033[1m'
 	fi
-	n="${C0}"
-	c="${C4}"
-	p='*'
-	while getopts ":eswd" opt; do
+
+	local n="${C0}"
+	local c="${C4}"
+	local p='*'
+	local e=
+
+	while getopts ":ceswd" opt; do
 		case "${opt}" in
+			c)
+				p='✖'
+				c="${C1}"
+				e=1
+				;;
 			e)
 				p='✖'
 				c="${C1}"
@@ -41,8 +49,13 @@ log() {
 		esac
 	done
 	shift $((OPTIND - 1))
+	unset OPTIND
 
 	printf "${n}[${CB}${c}${p}${n}] ${NAME}: %s\n" "${*}" >&2
+
+	if [[ ${e} ]]; then
+		exit 1
+	fi
 }
 
 usage() {
@@ -82,17 +95,20 @@ while getopts ":h" opt; do
 	esac
 done
 shift $((OPTIND - 1))
+unset OPTIND
 
-if [ ! ${#} -gt 0 ]; then
+if [[ ${#} -le 0 ]]; then
 	usage
 	exit
 fi
 
 for pid in "${@}"; do
-	if pgrep "${pid}" >/dev/null 2>&1; then
-		log "Reloading server: ${pid}"
-
-		kill -HUP "${pid}"
+	if pgrep "${pid}" &>/dev/null; then
+		if kill -HUP "${pid}"; then
+			log -s "Server PID: ${pid}"
+		else
+			log -e "Server PID: ${pid}"
+		fi
 	else
 		log -e "No running server with PID: ${pid}"
 	fi

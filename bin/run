@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Run the production server
 
@@ -7,20 +7,28 @@
 #
 
 log() {
-	if [ -t 2 ]; then
-		C0='\033[0m'
-		C1='\033[31m'
-		C2='\033[32m'
-		C3='\033[33m'
-		C4='\033[34m'
-		C5='\033[35m'
-		CB='\033[1m'
+	if [[ -t 2 ]]; then
+		local C0=$'\033[0m'
+		local C1=$'\033[31m'
+		local C2=$'\033[32m'
+		local C3=$'\033[33m'
+		local C4=$'\033[34m'
+		local C5=$'\033[35m'
+		local CB=$'\033[1m'
 	fi
-	n="${C0}"
-	c="${C4}"
-	p='*'
-	while getopts ":eswd" opt; do
+
+	local n="${C0}"
+	local c="${C4}"
+	local p='*'
+	local e=
+
+	while getopts ":ceswd" opt; do
 		case "${opt}" in
+			c)
+				p='✖'
+				c="${C1}"
+				e=1
+				;;
 			e)
 				p='✖'
 				c="${C1}"
@@ -41,8 +49,13 @@ log() {
 		esac
 	done
 	shift $((OPTIND - 1))
+	unset OPTIND
 
 	printf "${n}[${CB}${c}${p}${n}] ${NAME}: %s\n" "${*}" >&2
+
+	if [[ ${e} ]]; then
+		exit 1
+	fi
 }
 
 usage() {
@@ -58,7 +71,6 @@ BASE="$(realpath "$(dirname "${0}")"/..)"
 
 ADDR=0.0.0.0
 PORT=1080
-
 SOCKET=
 
 USAGE="\
@@ -76,9 +88,15 @@ Extra arguments are sent to the server."
 
 while getopts ":H:P:S:h" opt; do
 	case "${opt}" in
-		H) ADDR="${OPTARG}" ;;
-		P) PORT="${OPTARG}" ;;
-		S) SOCKET="$(realpath -m "${OPTARG}")" ;;
+		H)
+			ADDR="${OPTARG}"
+			;;
+		P)
+			PORT="${OPTARG}"
+			;;
+		S)
+			SOCKET="$(realpath -m "${OPTARG}")"
+			;;
 		h)
 			usage
 			exit
@@ -95,41 +113,38 @@ while getopts ":H:P:S:h" opt; do
 	esac
 done
 shift $((OPTIND - 1))
+unset OPTIND
 
 log "Initializing virtual environment."
 
-if [ -d "${BASE}"/.venv ] && [ -f "${BASE}"/.venv/bin/activate ]; then
+if [[ -d ${BASE}/.venv && -f ${BASE}/.venv/bin/activate ]]; then
 	. "${BASE}"/.venv/bin/activate
 else
 	log -w "No virtual environment found!"
 fi
 
-if ! command -v python3 >/dev/null 2>&1; then
-	log -e "Python3 not installed!"
-	exit 1
+if ! command -v gunicorn &>/dev/null; then
+	log -c "gunicorn is not installed!"
 fi
 
-if ! command -v gunicorn >/dev/null 2>&1; then
-	log -e "Server (gunicorn) not found!"
-	exit 1
-fi
-
-if ! cd "${BASE}" >/dev/null 2>&1; then
-	log -e "Failed to switch to project directory!"
-	exit 1
+if ! cd "${BASE}" &>/dev/null; then
+	log -c "Failed to change to project directory!"
 fi
 
 log "Starting the production server."
 
-if [ -n "${SOCKET}" ]; then
+if [[ ${SOCKET} ]]; then
 	BIND="unix:${SOCKET}"
-	log "Listening at: ${SOCKET}"
+
+	log "Listening at: ${SOCKET#"${BASE}"/}"
 else
 	BIND="${ADDR}:${PORT}"
+
 	log "Listening at: http://${ADDR}:${PORT}"
 fi
 
 exec gunicorn \
-	-w "$(nproc || printf 1)" \
-	-b "${BIND}" \
-	'app:create_app()' "${@}" >/dev/null 2>&1
+	--bind "${BIND}" \
+	--workers "$(nproc || printf 1)" \
+	--keep-alive 60 \
+	'app:create_app()' "${@}" &>/dev/null
