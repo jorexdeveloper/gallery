@@ -48,8 +48,7 @@ class MediaItem:
                 self.type = "image"
 
         if not self.thumb:
-            self.thumb = os.path.join(
-                info[0] + config.THUMBNAILS_EXT)
+            self.thumb = os.path.join(info[0] + config.THUMBNAILS_EXT)
 
 
 @dataclasses.dataclass
@@ -61,7 +60,6 @@ class DirectoryItem:
         count (str) : The number of media items in the directory.
         thumbnail (MediaItem) : The path to the thumbnail of the directory.
         name (str, optional): The name of the directory item.
-        comment (str, optional): The comment of the directory item.
     """
 
     path: str
@@ -76,15 +74,8 @@ class DirectoryItem:
     name: str = ""
     """The name of the directory item."""
 
-    comment: str = ""
-    """The comment for the directory item."""
-
     def __post_init__(self):
         """Set optional attributes."""
 
         if not self.name:
             self.name = os.path.basename(self.path)
-
-        if not self.comment:
-            self.comment = (str(self.count) + " item" +
-                            ("s" if self.count > 1 else "")) if self.count else "empty"

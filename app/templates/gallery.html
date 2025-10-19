@@ -1,9 +1,9 @@
 {% for item in items %} {% if item.type == "image" or item.type == "video" %}
 <a
-    class="gallery-item d-flex flex-column wow fadeIn"
+    class="gallery-item media-item d-flex flex-column"
     data-fancybox="gallery"
-    data-caption="{{ item.name }}"
     data-src="{{ url_for('gallery.media', path=item.path) }}"
+    data-download-src="{{ url_for('gallery.media', path=item.path) }}"
 >
     <img
         class="d-block"
@@ -18,13 +18,13 @@
         <i class="fas fa-play"></i>
     </div>
     {% endif %}
-    <div class="media-info text-light user-select-all wow fadeIn">
+    <div class="media-info text-light user-select-all">
         <div class="media-title">{{ item.name }}</div>
     </div>
 </a>
 {% else %}
 <a
-    class="gallery-item d-flex flex-column wow fadeIn"
+    class="gallery-item folder-item d-flex flex-column"
     href="{{ url_for('gallery.path', path=item.path) }}"
 >
     <img
@@ -38,7 +38,7 @@
     </div>
     <div class="folder-badge text-light user-select-all">
         <i class="fas fa-folder-open"></i>
-        <span>{{ item.comment }}</span>
+        <span>{{ item.count if item.count else "empty" }}</span>
     </div>
 </a>
 {% endif %} {% endfor %}

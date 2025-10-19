@@ -4,7 +4,7 @@ import flask
 DEFAULT_BLUEPRINT = flask.Blueprint("gallery", __name__)
 """The default blueprint for all app instances."""
 
-ITEMS_PER_PAGE = 50
+ITEMS_PER_PAGE = 10
 """The number of items to show on a single page."""
 
 
@@ -48,13 +48,13 @@ def path(path: str) -> str:
         str: The rendered HTML for the directory page.
     """
 
-    flask.current_app.logger.info(
-        "Request for main page of %s.",
-        path or "index")
+    # flask.current_app.logger.info(
+    #     "Request for main page of %s.",
+    #     path or "index")
 
-    flask.current_app.logger.info(
-        "Returning main page of %s.",
-        path or "index")
+    # flask.current_app.logger.info(
+    #     "Returning main page of %s.",
+    #     path or "index")
 
     data = flask.current_app.config["GALLERY_DATA"]["directories"].get(path)
     if data:
@@ -64,7 +64,7 @@ def path(path: str) -> str:
         return flask.render_template(
             "index.html", breadcrumbs=[], path=path, items=[], last=data["count"] <= 0)
 
-    flask.current_app.logger.info("Path not found: '%s'.", path or "index")
+    # flask.current_app.logger.info("Path not found: '%s'.", path or "index")
     _abort(404)
 
 
@@ -79,20 +79,20 @@ def pages():
     path = flask.request.args.get("path", '')
     num = flask.request.args.get("page", '1')
 
-    flask.current_app.logger.info(
-        "Request for page %s of %s.",
-        num,
-        path or "index")
+    # flask.current_app.logger.info(
+    #     "Request for page %s of %s.",
+    #     num,
+    #     path or "index")
 
     try:
         num = int(num)
     except ValueError:
-        flask.current_app.logger.info("Invalid page number: '%s'.", num)
+        # flask.current_app.logger.info("Invalid page number: '%s'.", num)
         _abort(400)
 
     data = flask.current_app.config["GALLERY_DATA"]["directories"].get(path)
     if not data:
-        flask.current_app.logger.info("Path not found: '%s'.", path or "index")
+        # flask.current_app.logger.info("Path not found: '%s'.", path or "index")
         _abort(404)
 
     start = (num - 1) * ITEMS_PER_PAGE
@@ -101,13 +101,13 @@ def pages():
     last = data["count"] <= end
 
     if items:
-        flask.current_app.logger.info(
-            "Returning page %d of %s.", num, path or "index")
+        # flask.current_app.logger.info(
+        #     "Returning page %d of %s.", num, path or "index")
         return flask.render_template(
             "index.html", path=path, items=items, last=last)
 
-    flask.current_app.logger.info(
-        "Page %d not found for %s.", num, path or "index")
+    # flask.current_app.logger.info(
+    #     "Page %d not found for %s.", num, path or "index")
     _abort(404)
 
 
@@ -122,24 +122,24 @@ def media(path: str) -> flask.Response:
         str : The media file.
     """
 
-    flask.current_app.logger.info(
-        "Request for media file: '%s'.", path)
+    # flask.current_app.logger.info(
+    #     "Request for media file: '%s'.", path)
 
     data_path = path.rstrip('/')
     if data_path in flask.current_app.config["GALLERY_DATA"]["media_files"]:
         if path and path.endswith('/'):
             path = path.rstrip('/')
 
-            flask.current_app.logger.info(
-                "Redirecting to: '%s'.", path)
+            # flask.current_app.logger.info(
+            #     "Redirecting to: '%s'.", path)
             return flask.current_app.redirect(
                 flask.current_app.url_for("page", path=path))
 
-        flask.current_app.logger.info("Returning media file: '%s'.", path)
+        # flask.current_app.logger.info("Returning media file: '%s'.", path)
         return flask.send_from_directory(
             flask.current_app.config["MEDIA_DIR"], path)
 
-    flask.current_app.logger.info("Media file not found: '%s'.", path)
+    # flask.current_app.logger.info("Media file not found: '%s'.", path)
     _abort(404)
 
 
@@ -154,22 +154,22 @@ def thumbnails(path: str) -> flask.Response:
         str : The thumbnail file.
     """
 
-    flask.current_app.logger.info(
-        "Request for thumbnail file: '%s'.", path)
+    # flask.current_app.logger.info(
+    #     "Request for thumbnail file: '%s'.", path)
 
     data_path = path.rstrip('/')
     if data_path in flask.current_app.config["GALLERY_DATA"]["thumbnails"]:
         if path and path.endswith('/'):
             path = path.rstrip('/')
 
-            flask.current_app.logger.info(
-                "Redirecting to: '%s'.", path)
+            # flask.current_app.logger.info(
+            #     "Redirecting to: '%s'.", path)
             return flask.current_app.redirect(
                 flask.current_app.url_for("page", path=path))
 
-        flask.current_app.logger.info("Returning thumbnail file: '%s'.", path)
+        # flask.current_app.logger.info("Returning thumbnail file: '%s'.", path)
         return flask.send_from_directory(
             flask.current_app.config["THUMBNAILS_DIR"], path)
 
-    flask.current_app.logger.info("Thumbnail not found: '%s'.", path)
+    # flask.current_app.logger.info("Thumbnail not found: '%s'.", path)
     _abort(404)

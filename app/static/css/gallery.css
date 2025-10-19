@@ -3,7 +3,7 @@
  */
 
 .gallery-layout {
-    --gutter: 1px;
+    --gutter: 2px;
 
     padding: calc(2 * var(--gutter));
 }
@@ -66,15 +66,15 @@
     opacity: 0;
     visibility: hidden;
     position: absolute;
-    bottom: var(--gutter);
-    left: var(--gutter);
-    padding: 0.3rem 0.8rem;
+    bottom: 8px;
+    left: 8px;
+    padding: 0.3rem 0.6rem;
     border-radius: 16px;
     /* transform: translateY(150%); */
     transition: transform 0.8s ease;
     color: var(--text);
     background: var(--glass-bg);
-    border-radius: 16px;
+    border-radius: 8px;
 
     font-size: 0.75rem;
     -webkit-backdrop-filter: blur(8px);
@@ -89,13 +89,13 @@
 
 .folder-badge {
     position: absolute;
-    bottom: var(--gutter);
-    right: var(--gutter);
-    padding: 0.3rem 0.8rem;
+    bottom: 8px;
+    right: 8px;
+    padding: 0.3rem 0.6rem;
     border-radius: 16px;
     color: var(--text);
     background: var(--glass-bg);
-    border-radius: 16px;
+    border-radius: 8px;
 
     font-size: 0.75rem;
     display: flex;
@@ -121,3 +121,7 @@
     transition: transform 0.2s;
     -webkit-transition: -webkit-transform 0.2s;
 }
+
+/*
+ * Fancybox
+ */

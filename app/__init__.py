@@ -18,29 +18,29 @@ def create_app(
     """
 
     app = flask.Flask(__name__)
-    app.logger.info("Created new app instance.")
+    # app.logger.info("Created new app instance.")
 
     if mapping:
-        app.logger.info("Loading configuration from mapping.")
+        # app.logger.info("Loading configuration from mapping.")
         app.config.from_mapping(mapping)
     else:
-        app.logger.info(
-            "Loading configuration from python file: '%s'.",
-            CONFIG_FILE)
+        # app.logger.info(
+        #     "Loading configuration from python file: '%s'.",
+        #     CONFIG_FILE)
         app.config.from_pyfile(CONFIG_FILE)
 
     try:
-        app.logger.info("Loading gallery data.")
+        # app.logger.info("Loading gallery data.")
         gallery_data = load_gallery_data()
     except Exception as e:
-        app.logger.exception("Exception while loading gallery data: %s", e)
+        # app.logger.exception("Exception while loading gallery data: %s", e)
         gallery_data = {"directories": {}, "media_files": set()}
 
     app.config.from_mapping(GALLERY_DATA=gallery_data)
 
     from . import routes
 
-    app.logger.info("Registering Blueprints.")
+    # app.logger.info("Registering Blueprints.")
     app.register_blueprint(routes.DEFAULT_BLUEPRINT)
 
     return app
