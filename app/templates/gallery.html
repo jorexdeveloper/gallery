@@ -1,44 +1,74 @@
-{% for item in items %} {% if item.type == "image" or item.type == "video" %}
-<a
-    class="gallery-item media-item d-flex flex-column"
-    data-fancybox="gallery"
-    data-src="{{ url_for('gallery.media', path=item.path) }}"
-    data-download-src="{{ url_for('gallery.media', path=item.path) }}"
->
-    <img
-        class="d-block"
-        src="{{ url_for('gallery.thumbnails', path=item.thumb) }}"
-        alt="{{ item.name }}"
-        loading="lazy"
-    />
-    {% if item.type == "video" %}
-    <div
-        class="play-icon position-absolute top-50 start-50 translate-middle text-light"
+{% for item in items %}
+    {% if item.type == "image" %}
+    <a
+        class="gallery-item media-item d-flex flex-column overflow-hidden"
+        data-fancybox="gallery"
+        data-src="{{ url_for('gallery.media', path=item.path) }}"
+        data-download-src="{{ url_for('gallery.media', path=item.path) }}"
     >
-        <i class="fas fa-play"></i>
-    </div>
+        <img
+            class="d-block"
+            src="{{ url_for('gallery.thumbnails', path=item.thumb) }}"
+            alt="{{ item.name }}"
+            loading="lazy"
+        />
+        <div class="media-info text-light user-select-all">
+            <div class="media-title">{{ item.name }}</div>
+        </div>
+    </a>
+    {% elif item.type == "video" %}
+    <a
+        class="gallery-item media-item d-flex flex-column overflow-hidden"
+        data-fancybox="gallery"
+        data-src="{{ url_for('gallery.media', path=item.path) }}"
+        data-download-src="{{ url_for('gallery.media', path=item.path) }}"
+        data-width="100%"
+        data-height="100%"
+    >
+        <img
+            class="d-block"
+            src="{{ url_for('gallery.thumbnails', path=item.thumb) }}"
+            alt="{{ item.name }}"
+            loading="lazy"
+        />
+        <div
+            class="video-overlay d-flex position-absolute justify-content-center align-items-center overflow-hidden rounded-circle top-50 start-50 translate-middle bg-transparent border border-primary shadow"
+        >
+            <svg
+                class="bi bi-play-circle-fill opacity-75 text-black bg-primary"
+                xmlns="http://www.w3.org/2000/svg"
+                width="50"
+                height="50"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+            >
+                <path
+                    d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z"
+                />
+            </svg>
+        </div>
+        <div class="media-info text-light user-select-all">
+            <div class="media-title">{{ item.name }}</div>
+        </div>
+    </a>
+    {% else %}
+    <a
+        class="gallery-item folder-item d-flex flex-column overflow-hidden"
+        href="{{ url_for('gallery.path', path=item.path) }}"
+    >
+        <img
+            class="d-block"
+            src="{{ url_for('gallery.thumbnails', path=item.thumbnail.thumb) }}"
+            alt="{{ item.name }}"
+            loading="lazy"
+        />
+        <div class="media-info text-light user-select-all">
+            <div class="media-title">{{ item.name }}</div>
+        </div>
+        <div class="folder-badge text-light user-select-all">
+            <i class="fas fa-folder-open"></i>
+            <span>{{ item.count if item.count else "empty" }}</span>
+        </div>
+    </a>
     {% endif %}
-    <div class="media-info text-light user-select-all">
-        <div class="media-title">{{ item.name }}</div>
-    </div>
-</a>
-{% else %}
-<a
-    class="gallery-item folder-item d-flex flex-column"
-    href="{{ url_for('gallery.path', path=item.path) }}"
->
-    <img
-        class="d-block"
-        src="{{ url_for('gallery.thumbnails', path=item.thumbnail.thumb) }}"
-        alt="{{ item.name }}"
-        loading="lazy"
-    />
-    <div class="media-info text-light user-select-all">
-        <div class="media-title">{{ item.name }}</div>
-    </div>
-    <div class="folder-badge text-light user-select-all">
-        <i class="fas fa-folder-open"></i>
-        <span>{{ item.count if item.count else "empty" }}</span>
-    </div>
-</a>
-{% endif %} {% endfor %}
+{% endfor %}

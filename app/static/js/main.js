@@ -75,17 +75,21 @@ $("#retry-button").on("click", function () {
  * Fancybox
  */
 
-var $useImageBg = true;
+var colorWorker = new Worker("/static/js/color-worker.js");
+var useImageBg = true;
 
 Fancybox.bind("[data-fancybox]", {
     idle: 3000,
     closeExisting: true,
-    theme: "auto",
+    theme: "dark",
     Hash: false,
 
     Carousel: {
         Thumbs: false,
         transition: "tween",
+        // vertical: true,
+        // dragFree: true,
+        // fill: true,
 
         Toolbar: {
             display: {
@@ -94,6 +98,8 @@ Fancybox.bind("[data-fancybox]", {
                 right: ["fullscreen", "download", "close"],
             },
         },
+
+        // Arrows: false,
 
         Zoomable: {
             Panzoom: {
@@ -106,6 +112,8 @@ Fancybox.bind("[data-fancybox]", {
 
         breakpoints: {
             "(min-width: 768px)": {
+                vertical: false,
+
                 Toolbar: {
                     display: {
                         left: ["autoplay"],
@@ -120,6 +128,8 @@ Fancybox.bind("[data-fancybox]", {
             },
 
             "(min-width: 1024px)": {
+                vertical: false,
+
                 Toolbar: {
                     display: {
                         left: ["autoplay"],
@@ -150,6 +160,51 @@ Fancybox.bind("[data-fancybox]", {
                 },
             },
         },
+
+        on: {
+            render: () => {
+                if (useImageBg) {
+                    var img = Fancybox.getSlide().thumbEl;
+
+                    if (!img) {
+                        setFancyBoxBg(Fancybox, [0, 0, 0]);
+                        return;
+                    }
+
+                    if (img.complete) {
+                        sendImageToWorker(img);
+                    } else {
+                        img.addEventListener("load", () => {
+                            sendImageToWorker(img);
+                        });
+                    }
+                }
+            },
+
+            change: (carousel, index) => {
+                if (
+                    !(isLoading || isLastPage) &&
+                    index >= carousel.getSlides().length - 5
+                ) {
+                    infiniteScroll.loadNextPage().then((loaded) => {
+                        var items = loaded.items;
+                        var slides = [];
+
+                        items.forEach((item) => {
+                            if (item.classList.contains("media-item"))
+                                slides.push({
+                                    src: item.dataset.src,
+                                    thumb: item.querySelector("img")?.src,
+                                    triggerEl: item,
+                                    thumbEl: item.querySelector("img"),
+                                });
+                        });
+
+                        carousel.add(slides);
+                    });
+                }
+            },
+        },
     },
 
     // mainClass: "fancybox-bg-class",
@@ -162,47 +217,41 @@ Fancybox.bind("[data-fancybox]", {
         "--f-thumb-opacity": "0.5",
         "--f-thumb-hover-opacity": "1",
         "--f-thumb-selected-opacity": "1",
-        "--fancybox-backdrop-bg": "#000",
-    },
-
-    on: {
-        "Carousel.render": (fancybox) => {
-            if ($useImageBg) {
-                var img = fancybox.getSlide().thumbEl;
-                // TODO: Add code to set bg to blurred thumbnail
-
-                // if (img.complete) {
-                //     //
-                // } else {
-                //     img.addEventListener("load", () => {
-                //         //
-                //     });
-                // }
-            }
-        },
-
-        "Carousel.change": (fancybox, carousel, index) => {
-            if (
-                !(isLoading || isLastPage) &&
-                index >= carousel.getSlides().length - 5
-            ) {
-                infiniteScroll.loadNextPage().then((loaded) => {
-                    var items = loaded.items;
-                    var slides = [];
-
-                    items.forEach((item) => {
-                        if (item.classList.contains("media-item"))
-                            slides.push({
-                                src: item.dataset.src,
-                                thumb: item.querySelector("img")?.src,
-                                triggerEl: item,
-                                thumbEl: item.querySelector("img"),
-                            });
-                    });
-
-                    carousel.add(slides);
-                });
-            }
-        },
+        // "--fancybox-backdrop-bg": "#000",
     },
 });
+
+function setFancyBoxBg(rgb) {
+    Fancybox.getInstance()
+        .getContainer()
+        .style.setProperty(
+            "--fancybox-backdrop-bg",
+            `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.5)`
+        );
+}
+
+colorWorker.onmessage = (e) => {
+    const color = e.data;
+
+    if (color) {
+        setFancyBoxBg(color);
+    } else {
+        setFancyBoxBg([0, 0, 0]);
+    }
+};
+
+function sendImageToWorker(img) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    const w = Math.min(img.naturalWidth, 100);
+    const h = Math.min(img.naturalHeight, 100);
+
+    canvas.width = w;
+    canvas.height = h;
+
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const imageData = ctx.getImageData(0, 0, w, h);
+    colorWorker.postMessage(imageData);
+}

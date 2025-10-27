@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="auto">
+<html lang="en" data-bs-theme="dark">
     <head>
         <meta charset="utf-8" />
         <meta
@@ -45,6 +45,10 @@
             rel="stylesheet"
             href="{{ url_for('static', filename='assets/lib/animate/v3.5.2/animate.min.css') }}"
         /> -->
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='assets/lib/video-js/v8.21.1/video-js.css') }}"
+        />
 
         <!-- Custom CSS -->
         <link
@@ -118,13 +122,13 @@
                 class="container-xl d-flex flex-column flex-lg-row align-items-center justify-content-center border-top p-3 wow fadeIn"
             >
                 <span class="text-center p-1 user-select-none">
+                    License · Terms · Privacy Policy
+                </span>
+                <span class="text-center p-1 user-select-none">
                     Copyright &copy; 2025
                     <a href="https://jorexdeveloper.github.io/jorexdeveloper/"
                         >Jore</a
                     >
-                </span>
-                <span class="text-center p-1 user-select-none">
-                    All rights reserved.
                 </span>
             </div>
         </footer>
@@ -136,6 +140,7 @@
         <script src="{{ url_for('static', filename='assets/lib/infinite-scroll/v5.0.0/infinite-scroll.pkgd.min.js.js') }}"></script>
         <!-- <script src="{{ url_for('static', filename='assets/lib/draggabilly/v3.0.0/draggabilly.pkgd.min.js') }}"></script> -->
         <script src="{{ url_for('static', filename='assets/lib/fancybox/v6.0.34/fancybox.umd.js') }}"></script>
+        <script src="{{ url_for('static', filename='assets/lib/video-js/v8.21.1/video.min.js') }}"></script>
         <!-- <script src="{{ url_for('static', filename='assets/lib/wow/v1.3.0/wow.min.js') }}"></script> -->
         <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     </body>

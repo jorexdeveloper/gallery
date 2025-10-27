@@ -11,6 +11,18 @@ html {
 
 :root {
     --glass-bg: rgba(255, 255, 255, 0.1);
+
+    --bs-primary: var(--bs-danger);
+    --bs-primary-rgb: var(--bs-danger-rgb);
+    --bs-primary-bg-subtle: var(--bs-danger-bg-subtle);
+    --bs-primary-border-subtle: var(--bs-danger-border-subtle);
+    --bs-primary-text-emphasis: var(--bs-danger-text-emphasis);
+
+    /* --bs-dark: black; */
+    /* --bs-dark-rgb: black; */
+    /* --bs-dark-bg-subtle: var(); */
+    /* --bs-dark-border-subtle: var(); */
+    /* --bs-dark-text-emphasis: var(); */
 }
 
 /*

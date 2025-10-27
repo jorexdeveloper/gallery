@@ -1,11 +1,13 @@
 /*
  * Layout
  */
-
+video {
+    background:transparent;
+}
 .gallery-layout {
     --gutter: 2px;
 
-    padding: calc(2 * var(--gutter));
+    padding: calc(1 * var(--gutter));
 }
 
 .gallery-container {
@@ -52,15 +54,13 @@
     }
 }
 
+.gallery-item:hover img {
+    transform: scale(1.04);
+}
+
 /*
  * Media Info
  */
-
-.play-icon {
-    font-size: 4rem;
-    color: rgba(255, 255, 255, 0.8);
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
 
 .media-info {
     opacity: 0;
@@ -71,14 +71,14 @@
     padding: 0.3rem 0.6rem;
     border-radius: 16px;
     /* transform: translateY(150%); */
-    transition: transform 0.8s ease;
+    transition: opacity transform 0.8s ease;
     color: var(--text);
     background: var(--glass-bg);
     border-radius: 8px;
 
     font-size: 0.75rem;
     -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(60px);
+    backdrop-filter: blur(8px);
 }
 
 .gallery-item:hover .media-info {
@@ -125,3 +125,8 @@
 /*
  * Fancybox
  */
+
+.fancybox__backdrop {
+    /* background: rgba(0, 0, 0, 0.5); */
+    backdrop-filter: blur(5px);
+}

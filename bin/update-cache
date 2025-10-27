@@ -69,6 +69,7 @@ usage() {
 NAME="$(basename "${0}")"
 BASE="$(realpath "$(dirname "${0}")"/..)"
 
+FORCE=
 IMAGES=1
 VIDEOS=1
 PID=()
@@ -81,16 +82,20 @@ Update the cache files.
 Options:
   -i        Generate image thumbnails only.
   -v        Generate video thumbnails only.
+  -f        Force new cache generation.
   -p <PID>  Reload a running server.
   -h        Show help message and exit."
 
-while getopts ":ivp:h" opt; do
+while getopts ":ivfp:h" opt; do
 	case "${opt}" in
 		i)
 			VIDEOS=
 			;;
 		v)
 			IMAGES=
+			;;
+		f)
+			FORCE=1
 			;;
 		p)
 			PID+=("${OPTARG}")
@@ -176,7 +181,9 @@ if [[ ${IMAGES} ]]; then
 		file="${img#"${MEDIA_DIR}"/}"
 		thumb="${CACHE_DIR}/${THUMBNAILS_FILE}/${file%.*}${THUMBNAILS_EXT}"
 
-		if [[ -f "${thumb}" ]]; then
+		if [[ ${FORCE} ]]; then
+			rm -rf "${thumb}"
+		elif [[ -f "${thumb}" ]]; then
 			continue
 		fi
 
@@ -195,7 +202,9 @@ if [[ ${VIDEOS} ]]; then
 		file="${vid#"${MEDIA_DIR}"/}"
 		thumb="${CACHE_DIR}/${THUMBNAILS_FILE}/${file%.*}${THUMBNAILS_EXT}"
 
-		if [[ -f "${thumb}" ]]; then
+		if [[ ${FORCE} ]]; then
+			rm -rf "${thumb}"
+		elif [[ -f "${thumb}" ]]; then
 			continue
 		fi
 
