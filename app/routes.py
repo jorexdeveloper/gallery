@@ -92,6 +92,7 @@ def pages():
         _abort(400)
 
     data = flask.current_app.config["GALLERY_DATA"]["directories"][path]
+
     if not data:
         # flask.current_app.logger.info("Path not found: '%s'.", path or
         # "index")

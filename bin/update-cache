@@ -212,6 +212,7 @@ if [[ ${VIDEOS} ]]; then
 
 		if [[ ! ${duration} || ${duration} -lt 1 ]]; then
 			log -e "${file}"
+
 			continue
 		fi
 
