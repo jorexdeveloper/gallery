@@ -77,37 +77,61 @@ def pages():
     """
 
     path = flask.request.args.get("path", '')
-    num = flask.request.args.get("page", '1')
+    page = flask.request.args.get("page", '1')
+    recurse = flask.request.args.get("recurse", '')
 
     # flask.current_app.logger.info(
     #     "Request for page %s of %s.",
-    #     num,
+    #     page,
     #     path or "index")
 
     try:
-        num = int(num)
+        page = int(page)
     except ValueError:
-        # flask.current_app.logger.info("Invalid page number: '%s'.", num)
+        # flask.current_app.logger.info("Invalid page number: '%s'.", page)
         _abort(400)
 
-    data = flask.current_app.config["GALLERY_DATA"]["directories"].get(path)
+    data = flask.current_app.config["GALLERY_DATA"]["directories"][path]
     if not data:
-        # flask.current_app.logger.info("Path not found: '%s'.", path or "index")
+        # flask.current_app.logger.info("Path not found: '%s'.", path or
+        # "index")
         _abort(404)
 
-    start = (num - 1) * ITEMS_PER_PAGE
+    start = (page - 1) * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
-    items = data["items"][start:end]
-    last = data["count"] <= end
 
-    if items:
+    if recurse:
+        items = []
+
+        def _recurse(item_list):
+            for item in item_list:
+                if item.type == "directory":
+                    _recurse(
+                        flask.current_app.config["GALLERY_DATA"]["directories"][item.path]["items"])
+                else:
+                    items.append(item)
+
+        _recurse(data["items"])
+
+        last = len(items) <= end
+        items = items[start:end]
+
         # flask.current_app.logger.info(
-        #     "Returning page %d of %s.", num, path or "index")
+        #     "Returning page %d of %s.", page, path or "index")
         return flask.render_template(
             "index.html", path=path, items=items, last=last)
+    else:
+        items = data["items"][start:end]
+        last = data["count"] <= end
+
+        if items:
+            # flask.current_app.logger.info(
+            #     "Returning page %d of %s.", page, path or "index")
+            return flask.render_template(
+                "index.html", path=path, items=items, last=last)
 
     # flask.current_app.logger.info(
-    #     "Page %d not found for %s.", num, path or "index")
+    #     "Page %d not found for %s.", page, path or "index")
     _abort(404)
 
 

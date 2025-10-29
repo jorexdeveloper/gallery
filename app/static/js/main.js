@@ -24,6 +24,7 @@ var infiniteScroll;
 var currentPage = 0;
 var isLastPage = gallery.data("last");
 var isLoading = false;
+var dirRecurse = false;
 
 function initInfiniteScroll() {
     infiniteScroll = gallery
@@ -34,7 +35,9 @@ function initInfiniteScroll() {
                     var path = gallery.data("path");
                     var pageNumber = currentPage + 1;
 
-                    return `${url}?path=${path}&page=${pageNumber}`;
+                    if (dirRecurse)
+                        return `${url}?path=${path}&page=${pageNumber}&recurse=${dirRecurse}`;
+                    else return `${url}?path=${path}&page=${pageNumber}`;
                 }
             },
             prefill: true,
@@ -76,7 +79,7 @@ $("#retry-button").on("click", function () {
  */
 
 var colorWorker = new Worker("/static/js/color-worker.js");
-var useImageBg = true;
+var useImageBg = false;
 
 Fancybox.bind("[data-fancybox]", {
     idle: 3000,

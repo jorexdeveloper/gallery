@@ -60,6 +60,7 @@ class DirectoryItem:
         count (str) : The number of media items in the directory.
         thumbnail (MediaItem) : The path to the thumbnail of the directory.
         name (str, optional): The name of the directory item.
+        type (str, optional): The type of the media item.
     """
 
     path: str
@@ -73,6 +74,9 @@ class DirectoryItem:
 
     name: str = ""
     """The name of the directory item."""
+
+    type: str = "directory"
+    """The type of the media item."""
 
     def __post_init__(self):
         """Set optional attributes."""
