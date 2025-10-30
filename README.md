@@ -1,5 +1,7 @@
 ### **Gallery**
 
+<div style="display: flex; overflow-x: auto; white-space: nowrap; border: 1px solid #30363d; padding: 10px; border-radius: 5px;"> <img src="screenshots/screenshot_1.png" alt="Screenshot 1 of the gallery" style="height: 300px; margin-right: 10px; border-radius: 5px;"> <img src="screenshots/screenshot_2.png" alt="Screenshot 2 of the gallery" style="height: 300px; margin-right: 10px; border-radius: 5px;"> <img src="screenshots/screenshot_3.png" alt="Screenshot 3 of the gallery" style="height: 300px; border-radius: 5px;"> </div>
+
 #### **1. Overview**
 
 This project is a web-based media gallery built with the Flask framework. It is designed to efficiently serve a directory of images and videos. The core design philosophy is to perform expensive operations like scanning for media and generating thumbnails offline via command-line scripts. The web application then reads from a pre-generated "manifest" file and a cache of thumbnails, ensuring fast page loads and minimal processing during user requests.
