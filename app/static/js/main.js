@@ -79,7 +79,7 @@ $("#retry-button").on("click", function () {
  */
 
 var colorWorker = new Worker("/static/js/color-worker.js");
-var useImageBg = false;
+var useImageBg = true;
 
 Fancybox.bind("[data-fancybox]", {
     idle: 3000,
